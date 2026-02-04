@@ -36,26 +36,26 @@ export interface FooterLinksConfig {
 
 /**
  * Extended AppDefinition with service authentication token
- * The npm package uses 'appId' but our code uses 'serviceAuthToken'
- * This interface bridges that gap for backward compatibility
+ * Bridges the gap between the package's ServiceConfig and legacy usage
  */
-export interface ExtendedAppDefinition extends AppDefinition {
+export type ExtendedAppDefinition = AppDefinition & {
   serviceAuthToken?: string;
-}
+};
 
 /**
  * Extended TheiaCloudConfig with additional EduTheia properties
+ * Uses intersection type since TheiaCloudConfig is a type alias
  */
-export interface ExtendedTheiaCloudConfig extends TheiaCloudConfig {
+export type ExtendedTheiaCloudConfig = Omit<TheiaCloudConfig, 'additionalApps'> & {
   additionalApps?: ExtendedAppDefinition[];
   footerLinks?: FooterLinksConfig;
-}
+};
 
 /**
  * Helper to get service auth token from config or app definition
  * Handles both 'appId' (from npm package) and 'serviceAuthToken' (legacy)
  */
-export function getServiceAuthToken(config: TheiaCloudConfig | ExtendedAppDefinition): string {
+export function getServiceAuthToken(config: TheiaCloudConfig | ExtendedTheiaCloudConfig | ExtendedAppDefinition): string {
   if ('serviceAuthToken' in config && typeof config.serviceAuthToken === 'string') {
     return config.serviceAuthToken;
   }

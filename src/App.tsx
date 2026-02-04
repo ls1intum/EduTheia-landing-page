@@ -7,11 +7,11 @@ import {
   RequestOptions,
   TheiaCloud
 } from '@eclipse-theiacloud/common';
-import type { ExtendedAppDefinition, ExtendedTheiaCloudConfig } from './common-extensions/types';
-import { getServiceAuthToken } from './common-extensions/types';
 import Keycloak, { KeycloakConfig } from 'keycloak-js';
 import { useEffect, useState } from 'react';
 
+import type { ExtendedAppDefinition, ExtendedTheiaCloudConfig } from './common-extensions/types';
+import { getServiceAuthToken } from './common-extensions/types';
 import { AppLogo } from './components/AppLogo';
 import { ErrorComponent } from './components/ErrorComponent';
 import { Footer } from './components/Footer';
@@ -111,9 +111,8 @@ function App(): JSX.Element {
     // Get appDef parameter from URL and set it as the default selection
     if (urlParams.has('appDef') || urlParams.has('appdef')) {
       const pathBlueprintSelection = urlParams.get('appDef') || urlParams.get('appdef');
-      console.log('additionalApps: ' + JSON.stringify(config.additionalApps));
       if (
-        pathBlueprintSelection !== null &&
+        pathBlueprintSelection &&
         isDefaultSelectionValueValid(pathBlueprintSelection, config.appDefinition, config.additionalApps)
       ) {
         if (config.additionalApps && config.additionalApps.length > 0) {
@@ -123,7 +122,6 @@ function App(): JSX.Element {
           setSelectedAppName(appDefinition ? appDefinition.appName : pathBlueprintSelection);
           setSelectedAppDefinition(appDefinition ? (appDefinition.serviceAuthToken || appDefinition.appId) : pathBlueprintSelection);
         } else {
-          console.log('App definitition provided via URL parameter not found in additional apps');
           setSelectedAppDefinition(pathBlueprintSelection);
           setSelectedAppName(pathBlueprintSelection);
         }
@@ -210,7 +208,6 @@ function App(): JSX.Element {
               setEmail(userMail);
               setUsername(parsedToken.preferred_username ?? userMail);
               setLogoutUrl(keycloak.createLogoutUrl());
-              console.log(`Authenticated as ${parsedToken.preferred_username} (${userMail})`);
             }
           }
         })
@@ -223,34 +220,19 @@ function App(): JSX.Element {
 
   useEffect(() => {
     if (!initialized) {
-      console.log('Not initialized yet');
       return;
     }
 
     if (config.useKeycloak && !username) {
-      console.log('No username set yet but required');
       return;
     }
 
-    console.log('App init or username changed');
-    console.log('Selected app definition: ' + selectedAppDefinition);
-    console.log('Selected app name: ' + selectedAppName);
-    console.log('Configured app definition: ' + config.appDefinition);
-    console.log('Initial app definition: ' + initialAppDefinition);
-    console.log('Git URI: ' + gitUri);
-    console.log('Git User: ' + gitUser);
-    console.log('Git Mail: ' + gitMail);
-    console.log('Artemis Token: ' + artemisToken);
-    console.log('Artemis URL: ' + artemisUrl);
-    console.log('-----------------------------------');
 
     if (selectedAppDefinition && gitUri && artemisToken && !loading) {
-      console.log('Checking auth, setting autoStart to true');
       // authenticate();
       setAutoStart(true);
       handleStartSession(selectedAppDefinition);
     } else {
-      console.log('Setting autoStart to false');
       setAutoStart(false);
     }
   }, [initialized, username, user]);
@@ -282,7 +264,6 @@ function App(): JSX.Element {
             setEmail(userMail);
             setUsername(parsedToken.preferred_username ?? userMail);
             setLogoutUrl(keycloak.createLogoutUrl());
-            console.log(`Authenticated as ${parsedToken.preferred_username} (${userMail})`);
           }
         }
       })
@@ -304,18 +285,15 @@ function App(): JSX.Element {
 
         if (config.useEphemeralStorage) {
           workspace = undefined;
-          console.log('Launching ' + appDefinition + ' with ephemeral storage as not configured');
         } else {
           if (!gitUri) {
             workspace = undefined;
-            console.log('Launching ' + appDefinition + ' with ephemeral storage as this is a Playground session');
           } else {
             // Artemis URLs look like: https://user@artemis.cit.tum.de/git/THEIATESTTESTEXERCISE/theiatesttestexercise-artemis_admin.git
             //                                                                                   ^^^^^^^^^^^^^^^^^^^^^ we need this part
             // First we split at the / character, get the last part, split at the - character and get the first part
             const repoName = gitUri?.split('/').pop()?.split('-')[0] ?? Math.random().toString().substring(2, 10);
             workspace = 'ws-' + appDefinition + '-' + repoName + '-' + (config.useKeycloak ? username : user);
-            console.log('Launching ' + appDefinition + ' with persistent workspace ' + workspace);
           }
         }
 

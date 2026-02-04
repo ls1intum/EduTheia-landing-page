@@ -14,6 +14,7 @@ declare global {
 }
 
 export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) => {
+  // eslint-disable-next-line no-null/no-null
   const vantaRef = useRef<HTMLDivElement>(null);
   const [vantaEffect, setVantaEffect] = useState<any>(undefined);
   const { theme } = useTheme();
@@ -36,7 +37,6 @@ export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) =>
   const initializeVanta = () => {
     // Check if VANTA and THREE are loaded globally
     if (window.VANTA && window.THREE && vantaRef.current && !vantaEffect) {
-      console.log('Initializing Vanta Birds effect...');
 
       try {
         // Get colors from CSS variables
@@ -66,7 +66,6 @@ export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) =>
         });
 
         if (effect) {
-          console.log('Vanta Birds effect initialized successfully');
           setVantaEffect(effect);
         }
       } catch (error) {
@@ -80,7 +79,6 @@ export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) =>
         }
       }
     } else if (!window.VANTA || !window.THREE) {
-      console.log('VANTA or THREE not loaded yet, retrying...');
       // Retry after a short delay
       setTimeout(initializeVanta, 500);
     }
@@ -93,7 +91,6 @@ export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) =>
     return () => {
       clearTimeout(timer);
       if (vantaEffect) {
-        console.log('Destroying Vanta effect...');
         vantaEffect.destroy();
       }
     };
