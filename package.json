@@ -1,0 +1,70 @@
+{
+  "name": "edutheia-landing-page",
+  "version": "1.0.0",
+  "description": "Landing page for EduTheia Cloud workspace management",
+  "license": "EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ls1intum/EduTheia-landing-page.git"
+  },
+  "homepage": "https://github.com/ls1intum/EduTheia-landing-page#readme",
+  "bugs": {
+    "url": "https://github.com/ls1intum/EduTheia-landing-page/issues"
+  },
+  "keywords": [
+    "theia",
+    "cloud",
+    "kubernetes",
+    "landing-page",
+    "react",
+    "vite",
+    "education"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\""
+  },
+  "dependencies": {
+    "axios": "^1.6.1",
+    "keycloak-js": "25.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "three": "^0.180.0",
+    "uuid": "^8.3.2",
+    "vanta": "^0.5.24"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@types/uuid": "^8.3.4",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/parser": "^6.18.1",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.20.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-header": "^3.1.1",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-no-null": "^1.0.2",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.29.4",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "prettier": "^2.6.2",
+    "typescript": "^5.3.3",
+    "vite": "^7.2.2"
+  }
+}
