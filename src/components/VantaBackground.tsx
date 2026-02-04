@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -34,7 +34,7 @@ export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) =>
     return 0x2a2a40;
   };
 
-  const initializeVanta = () => {
+  const initializeVanta = useCallback((): void => {
     // Check if VANTA and THREE are loaded globally
     if (window.VANTA && window.THREE && vantaRef.current && !vantaEffect) {
 
@@ -82,7 +82,7 @@ export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) =>
       // Retry after a short delay
       setTimeout(initializeVanta, 500);
     }
-  };
+  }, [vantaEffect]);
 
   useEffect(() => {
     // Add a small delay to ensure the scripts are loaded
@@ -94,11 +94,11 @@ export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) =>
         vantaEffect.destroy();
       }
     };
-  }, []);
+  }, [initializeVanta, vantaEffect]);
 
   // Handle window resize
   useEffect(() => {
-    const handleResize = () => {
+    const handleResize = (): void => {
       if (vantaEffect) {
         vantaEffect.resize();
       }
@@ -120,7 +120,7 @@ export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) =>
         initializeVanta();
       }, 100);
     }
-  }, [theme]);
+  }, [theme, vantaEffect, initializeVanta]);
 
   return (
     <div style={{ position: 'relative', width: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>

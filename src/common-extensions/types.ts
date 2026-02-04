@@ -49,6 +49,7 @@ export type ExtendedAppDefinition = AppDefinition & {
 export type ExtendedTheiaCloudConfig = Omit<TheiaCloudConfig, 'additionalApps'> & {
   additionalApps?: ExtendedAppDefinition[];
   footerLinks?: FooterLinksConfig;
+  pageTitle?: string;
 };
 
 /**

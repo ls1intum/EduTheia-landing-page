@@ -7,6 +7,7 @@ window.theiaCloudConfig = {
   serviceUrl: 'http://localhost:8081/service',
   appDefinition: 'ghcr.io/ls1intum/theia/java-17:latest',
   useEphemeralStorage: true,
+  pageTitle: 'TUM Theia Cloud',
   additionalApps: [
     {
       appId: "c-latest",

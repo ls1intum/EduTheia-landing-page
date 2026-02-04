@@ -7,7 +7,7 @@ interface FooterProps {
 }
 
 export const Footer = ({ selectedAppDefinition, onNavigate, footerLinks }: FooterProps): JSX.Element => {
-  const handleNavigation = (page: 'home' | 'imprint' | 'privacy') => {
+  const handleNavigation = (page: 'home' | 'imprint' | 'privacy'): void => {
     if (onNavigate) {
       onNavigate(page);
     } else {

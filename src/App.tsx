@@ -8,7 +8,7 @@ import {
   TheiaCloud
 } from '@eclipse-theiacloud/common';
 import Keycloak, { KeycloakConfig } from 'keycloak-js';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { ExtendedAppDefinition, ExtendedTheiaCloudConfig } from './common-extensions/types';
 import { getServiceAuthToken } from './common-extensions/types';
@@ -39,7 +39,7 @@ function App(): JSX.Element {
 
   // Handle URL routing
   useEffect(() => {
-    const updatePageFromUrl = () => {
+    const updatePageFromUrl = (): void => {
       const path = window.location.pathname;
       if (path === '/imprint') {
         setCurrentPage('imprint');
@@ -62,7 +62,7 @@ function App(): JSX.Element {
   }, []);
 
   // Navigation handler that updates both state and URL
-  const handleNavigation = (page: 'home' | 'imprint' | 'privacy') => {
+  const handleNavigation = (page: 'home' | 'imprint' | 'privacy'): void => {
     const path = page === 'home' ? '/' : `/${page}`;
 
     // Update URL without page reload
@@ -133,49 +133,49 @@ function App(): JSX.Element {
 
     // Get gitUri parameter from URL.
     if (urlParams.has('gitUri')) {
-      const gitUri = urlParams.get('gitUri');
-      if (gitUri) {
-        setGitUri(gitUri);
+      const gitUriParam = urlParams.get('gitUri');
+      if (gitUriParam) {
+        setGitUri(gitUriParam);
       }
     }
 
     // Get artemisToken parameter from URL.
     if (urlParams.has('artemisToken')) {
-      const artemisToken = urlParams.get('artemisToken');
-      if (artemisToken) {
-        setArtemisToken(artemisToken);
+      const artemisTokenParam = urlParams.get('artemisToken');
+      if (artemisTokenParam) {
+        setArtemisToken(artemisTokenParam);
       }
     }
 
     // Get artemisUrl parameter from URL.
     if (urlParams.has('artemisUrl')) {
-      const artemisUrl = urlParams.get('artemisUrl');
-      if (artemisUrl) {
-        setArtemisUrl(artemisUrl);
+      const artemisUrlParam = urlParams.get('artemisUrl');
+      if (artemisUrlParam) {
+        setArtemisUrl(artemisUrlParam);
       }
     }
 
     // Get gitUser parameter from URL.
     if (urlParams.has('gitUser')) {
-      const gitUser = urlParams.get('gitUser');
-      if (gitUser) {
-        setGitUser(gitUser);
+      const gitUserParam = urlParams.get('gitUser');
+      if (gitUserParam) {
+        setGitUser(gitUserParam);
       }
     }
 
     // Get gitMail parameter from URL.
     if (urlParams.has('gitMail')) {
-      const gitMail = urlParams.get('gitMail');
-      if (gitMail) {
-        setGitMail(gitMail);
+      const gitMailParam = urlParams.get('gitMail');
+      if (gitMailParam) {
+        setGitMail(gitMailParam);
       }
     }
 
     // Get user parameter from URL (for anonymous mode when Keycloak is disabled).
     if (urlParams.has('user')) {
-      const user = urlParams.get('user');
-      if (user) {
-        setUser(user);
+      const userParam = urlParams.get('user');
+      if (userParam) {
+        setUser(userParam);
       }
     }
 
@@ -218,62 +218,7 @@ function App(): JSX.Element {
     initialized = true;
   }
 
-  useEffect(() => {
-    if (!initialized) {
-      return;
-    }
-
-    if (config.useKeycloak && !username) {
-      return;
-    }
-
-
-    if (selectedAppDefinition && gitUri && artemisToken && !loading) {
-      // authenticate();
-      setAutoStart(true);
-      handleStartSession(selectedAppDefinition);
-    } else {
-      setAutoStart(false);
-    }
-  }, [initialized, username, user]);
-
-  /* eslint-enable react-hooks/rules-of-hooks */
-
-  document.title = 'TUM Theia Cloud';
-
-  const authenticate: () => void = (): void => {
-    const keycloak = new Keycloak(keycloakConfig);
-
-    keycloak
-      .init({
-        redirectUri: window.location.origin + window.location.pathname,
-        checkLoginIframe: false
-      })
-      .then((authenticated: boolean) => {
-        if (!authenticated) {
-          keycloak.login({
-            redirectUri: window.location.origin + window.location.pathname,
-            action: 'webauthn-register-passwordless:skip_if_exists'
-          });
-        } else {
-          // If we are already authenticated (e.g. session existed but UI wasn't updated), update state
-          const parsedToken = keycloak.idTokenParsed;
-          if (parsedToken) {
-            const userMail = parsedToken.email;
-            setToken(keycloak.idToken);
-            setEmail(userMail);
-            setUsername(parsedToken.preferred_username ?? userMail);
-            setLogoutUrl(keycloak.createLogoutUrl());
-          }
-        }
-      })
-      .catch(() => {
-        console.error('Authentication Failed');
-        setError('Authentication failed');
-      });
-  };
-
-  const handleStartSession = (appDefinition: string): void => {
+  const handleStartSession = useCallback((appDefinition: string): void => {
     setLoading(true);
     setError(undefined);
 
@@ -384,6 +329,60 @@ function App(): JSX.Element {
             "Please try again later. Usually maintenance won't last longer than 60 minutes.\n\n"
         );
         setLoading(false);
+      });
+  }, [config, gitUri, username, user, token, artemisToken, artemisUrl, gitUser, gitMail, email]);
+
+  useEffect(() => {
+    if (!initialized) {
+      return;
+    }
+
+    if (config.useKeycloak && !username) {
+      return;
+    }
+
+    if (selectedAppDefinition && gitUri && artemisToken && !loading) {
+      // authenticate();
+      setAutoStart(true);
+      handleStartSession(selectedAppDefinition);
+    } else {
+      setAutoStart(false);
+    }
+  }, [username, user, selectedAppDefinition, gitUri, artemisToken, loading, handleStartSession, config.useKeycloak]);
+
+  /* eslint-enable react-hooks/rules-of-hooks */
+
+  document.title = config.pageTitle || 'TUM Theia Cloud';
+
+  const authenticate: () => void = (): void => {
+    const keycloak = new Keycloak(keycloakConfig);
+
+    keycloak
+      .init({
+        redirectUri: window.location.origin + window.location.pathname,
+        checkLoginIframe: false
+      })
+      .then((authenticated: boolean) => {
+        if (!authenticated) {
+          keycloak.login({
+            redirectUri: window.location.origin + window.location.pathname,
+            action: 'webauthn-register-passwordless:skip_if_exists'
+          });
+        } else {
+          // If we are already authenticated (e.g. session existed but UI wasn't updated), update state
+          const parsedToken = keycloak.idTokenParsed;
+          if (parsedToken) {
+            const userMail = parsedToken.email;
+            setToken(keycloak.idToken);
+            setEmail(userMail);
+            setUsername(parsedToken.preferred_username ?? userMail);
+            setLogoutUrl(keycloak.createLogoutUrl());
+          }
+        }
+      })
+      .catch(() => {
+        console.error('Authentication Failed');
+        setError('Authentication failed');
       });
   };
 
