@@ -59,7 +59,10 @@ export const Privacy: React.FC<PrivacyProps> = ({ onNavigate }) => (
 
         <div className='privacy__card'>
           <h2>Data Retention</h2>
-          <p>Personal data is retained only as long as necessary for the purposes outlined above or as required by law. User data is typically deleted after account termination or after a period of inactivity.</p>
+          <p>
+            Personal data is retained only as long as necessary for the purposes outlined above or as required by law.
+            User data is typically deleted after account termination or after a period of inactivity.
+          </p>
         </div>
 
         <div className='privacy__card'>

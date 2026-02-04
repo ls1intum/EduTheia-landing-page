@@ -1,14 +1,14 @@
 import './App.css';
 
 import {
-  AppDefinition,
   getTheiaCloudConfig,
   LaunchRequest,
   PingRequest,
   RequestOptions,
-  TheiaCloud,
-  TheiaCloudConfig
+  TheiaCloud
 } from '@eclipse-theiacloud/common';
+import type { ExtendedAppDefinition, ExtendedTheiaCloudConfig } from './common-extensions/types';
+import { getServiceAuthToken } from './common-extensions/types';
 import Keycloak, { KeycloakConfig } from 'keycloak-js';
 import { useEffect, useState } from 'react';
 
@@ -32,7 +32,7 @@ let initialAppDefinition = '';
 let keycloakConfig: KeycloakConfig | undefined = undefined;
 
 function App(): JSX.Element {
-  const [config] = useState(() => getTheiaCloudConfig());
+  const [config] = useState<ExtendedTheiaCloudConfig | undefined>(() => getTheiaCloudConfig());
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState<'home' | 'imprint' | 'privacy'>('home');
@@ -113,20 +113,16 @@ function App(): JSX.Element {
       const pathBlueprintSelection = urlParams.get('appDef') || urlParams.get('appdef');
       console.log('additionalApps: ' + JSON.stringify(config.additionalApps));
       if (
-        // eslint-disable-next-line no-null/no-null
         pathBlueprintSelection !== null &&
         isDefaultSelectionValueValid(pathBlueprintSelection, config.appDefinition, config.additionalApps)
       ) {
-        // eslint-disable-next-line no-null/no-null
         if (config.additionalApps && config.additionalApps.length > 0) {
-          // Find the selected app definition in the additional apps
           const appDefinition = config.additionalApps.find(
-            appDef => appDef.serviceAuthToken === pathBlueprintSelection
+            appDef => (appDef.serviceAuthToken || appDef.appId) === pathBlueprintSelection
           );
           setSelectedAppName(appDefinition ? appDefinition.appName : pathBlueprintSelection);
-          setSelectedAppDefinition(appDefinition ? appDefinition.serviceAuthToken : pathBlueprintSelection);
+          setSelectedAppDefinition(appDefinition ? (appDefinition.serviceAuthToken || appDefinition.appId) : pathBlueprintSelection);
         } else {
-          // If there are no additional apps, just use the application id as the name
           console.log('App definitition provided via URL parameter not found in additional apps');
           setSelectedAppDefinition(pathBlueprintSelection);
           setSelectedAppName(pathBlueprintSelection);
@@ -301,7 +297,7 @@ function App(): JSX.Element {
     setError(undefined);
 
     // first check if the service is available. if not we are doing maintenance and should adapt the error message accordingly
-    TheiaCloud.ping(PingRequest.create(config.serviceUrl, TheiaCloudConfig.getServiceAuthToken(config)))
+    TheiaCloud.ping(PingRequest.create(config.serviceUrl, getServiceAuthToken(config)))
       .then(() => {
         // ping successful continue with launch
         let workspace: string | undefined;
@@ -366,7 +362,7 @@ function App(): JSX.Element {
 
         const launchRequest = {
           serviceUrl: config.serviceUrl,
-          appId: TheiaCloudConfig.getServiceAuthToken(config),
+          appId: getServiceAuthToken(config),
           user: config.useKeycloak ? email! : user!,
           appDefinition: appDefinition,
           workspaceName: workspace,
@@ -493,7 +489,7 @@ function App(): JSX.Element {
 function isDefaultSelectionValueValid(
   defaultSelection: string,
   appDefinition: string,
-  additionalApps?: AppDefinition[]
+  additionalApps?: ExtendedAppDefinition[]
 ): boolean {
   if (defaultSelection === appDefinition) {
     return true;

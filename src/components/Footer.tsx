@@ -1,4 +1,4 @@
-import { FooterLinksConfig } from '@eclipse-theiacloud/common';
+import type { FooterLinksConfig } from '../common-extensions/types';
 
 interface FooterProps {
   selectedAppDefinition: string;
@@ -18,7 +18,7 @@ export const Footer = ({ selectedAppDefinition, onNavigate, footerLinks }: Foote
 
   return (
     <div className='App__footer'>
-      { selectedAppDefinition != '' && (
+      { selectedAppDefinition !== '' && (
         <p>
           <label htmlFor='selectapp'> {selectedAppDefinition} </label>
         </p>)

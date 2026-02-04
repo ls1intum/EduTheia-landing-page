@@ -162,10 +162,6 @@ To enable Keycloak authentication:
 ```
 EduTheia-landing-page/
 ├── src/
-│   ├── common/              # Vendored @eclipse-theiacloud/common package
-│   │   ├── client.ts        # Theia Cloud client API
-│   │   ├── config.ts        # Configuration types and utilities
-│   │   └── index.ts         # Package exports
 │   ├── components/          # React components
 │   │   ├── AppLogo.tsx
 │   │   ├── ErrorComponent.tsx

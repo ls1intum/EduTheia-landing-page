@@ -15,7 +15,7 @@ declare global {
 
 export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) => {
   const vantaRef = useRef<HTMLDivElement>(null);
-  const [vantaEffect, setVantaEffect] = useState<any>(null);
+  const [vantaEffect, setVantaEffect] = useState<any>(undefined);
   const { theme } = useTheme();
 
   // Helper function to get CSS variable value and convert to hex
@@ -116,7 +116,7 @@ export const VantaBackground: React.FC<VantaBackgroundProps> = ({ children }) =>
     if (vantaEffect) {
       // Destroy existing effect
       vantaEffect.destroy();
-      setVantaEffect(null);
+      setVantaEffect(undefined);
 
       // Reinitialize with new colors
       setTimeout(() => {

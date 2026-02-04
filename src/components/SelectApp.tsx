@@ -1,7 +1,7 @@
-import { AppDefinition } from '@eclipse-theiacloud/common';
+import type { ExtendedAppDefinition } from '../common-extensions/types';
 
 interface SelectAppProps {
-  appDefinitions: AppDefinition[] | undefined;
+  appDefinitions: ExtendedAppDefinition[] | undefined;
   onStartSession: (appDefinition: string) => void;
 }
 export const SelectApp: React.FC<SelectAppProps> = ({ appDefinitions, onStartSession }: SelectAppProps) => (
@@ -11,8 +11,8 @@ export const SelectApp: React.FC<SelectAppProps> = ({ appDefinitions, onStartSes
           <button
             key={index}
             className='App__grid-item'
-            onClick={() => onStartSession(app.serviceAuthToken)}
-            data-testid={`launch-app-${app.serviceAuthToken}`}
+            onClick={() => onStartSession(app.serviceAuthToken || app.appId)}
+            data-testid={`launch-app-${app.serviceAuthToken || app.appId}`}
           >
             <img
               src={`/assets/logos/${app.appName.toLowerCase().replace(/\s+/g, '-')}-logo.png`}

@@ -36,19 +36,17 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {
-    "axios": "^1.6.1",
+    "@eclipse-theiacloud/common": "^1.1.2",
     "keycloak-js": "25.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "three": "^0.180.0",
-    "uuid": "^8.3.2",
     "vanta": "^0.5.24"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
-    "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
     "@vitejs/plugin-react": "^4.2.1",

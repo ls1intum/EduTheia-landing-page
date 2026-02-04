@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import './Header.css';
 
 import { ThemeToggle } from './ThemeToggle';
@@ -44,7 +43,7 @@ export const Header = ({ email, authenticate, logoutUrl }: HeaderProps): JSX.Ele
         <button className='header__login-btn' onClick={authenticate}>
           Login
         </button>
-      ) : null}
+      ) : undefined}
       {logoutUrl && (
         <button
           className='header__logout-btn'
