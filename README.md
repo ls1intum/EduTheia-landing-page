@@ -64,7 +64,7 @@ The landing page is configured via `public/config.js`. Create or modify this fil
 ```javascript
 window.theiaCloudConfig = {
   // Basic configuration
-  appId: "your-service-auth-token",
+  serviceAuthToken: "your-service-auth-token",
   appName: "EduTheia",
   serviceUrl: "https://your-theia-cloud-instance.com",
   appDefinition: "your-app-definition",
@@ -82,6 +82,7 @@ window.theiaCloudConfig = {
   infoText: "Your cloud-based IDE for education",
   loadingText: "Loading your workspace...",
   logoFileExtension: "png",
+  pageTitle: "EduTheia Cloud",
 
   // Additional apps to display
   additionalApps: [
