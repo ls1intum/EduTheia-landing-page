@@ -1,12 +1,6 @@
 import './App.css';
 
-import {
-  getTheiaCloudConfig,
-  LaunchRequest,
-  PingRequest,
-  RequestOptions,
-  TheiaCloud
-} from '@eclipse-theiacloud/common';
+import { getTheiaCloudConfig, LaunchRequest, PingRequest, RequestOptions, TheiaCloud } from '@eclipse-theiacloud/common';
 import Keycloak, { KeycloakConfig } from 'keycloak-js';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -32,223 +26,226 @@ let initialAppDefinition = '';
 let keycloakConfig: KeycloakConfig | undefined = undefined;
 
 function App(): JSX.Element {
-  const [config] = useState<ExtendedTheiaCloudConfig | undefined>(() => getTheiaCloudConfig());
-  const [error, setError] = useState<string>();
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'home' | 'imprint' | 'privacy'>('home');
+    const [config] = useState<ExtendedTheiaCloudConfig | undefined>(() => getTheiaCloudConfig());
+    const [error, setError] = useState<string>();
+    const [loading, setLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState<'home' | 'imprint' | 'privacy'>('home');
 
-  // Handle URL routing
-  useEffect(() => {
-    const updatePageFromUrl = (): void => {
-      const path = window.location.pathname;
-      if (path === '/imprint') {
-        setCurrentPage('imprint');
-      } else if (path === '/privacy') {
-        setCurrentPage('privacy');
-      } else {
-        setCurrentPage('home');
-      }
-    };
-
-    // Initial load
-    updatePageFromUrl();
-
-    // Listen for browser back/forward navigation
-    window.addEventListener('popstate', updatePageFromUrl);
-
-    return () => {
-      window.removeEventListener('popstate', updatePageFromUrl);
-    };
-  }, []);
-
-  // Navigation handler that updates both state and URL
-  const handleNavigation = (page: 'home' | 'imprint' | 'privacy'): void => {
-    const path = page === 'home' ? '/' : `/${page}`;
-
-    // Update URL without page reload
-    window.history.pushState({}, '', path);
-
-    // Update state
-    setCurrentPage(page);
-  };
-
-  if (config === undefined) {
-    return (
-      <div className='App'>
-        <strong>FATAL: Theia Cloud configuration could not be found.</strong>
-      </div>
-    );
-  }
-
-  if (!initialized) {
-    initialAppName = config.appName;
-    initialAppDefinition = config.appDefinition;
-  }
-
-  // ignore ESLint conditional rendering warnings.
-  // If config === undefined, this is an unremediable situation anyway.
-  /* eslint-disable react-hooks/rules-of-hooks */
-  const [selectedAppName, setSelectedAppName] = useState<string>(initialAppName);
-  const [selectedAppDefinition, setSelectedAppDefinition] = useState<string>(initialAppDefinition);
-
-  const [email, setEmail] = useState<string>();
-  const [username, setUsername] = useState<string>();
-  const [token, setToken] = useState<string>();
-  const [logoutUrl, setLogoutUrl] = useState<string>();
-  const [user, setUser] = useState<string>();
-
-  const [gitUri, setGitUri] = useState<string>();
-  const [gitUser, setGitUser] = useState<string>();
-  const [gitMail, setGitMail] = useState<string>();
-  const [artemisToken, setArtemisToken] = useState<string>();
-  const [artemisUrl, setArtemisUrl] = useState<string>();
-
-  const [autoStart, setAutoStart] = useState<boolean>(false);
-
-  if (!initialized) {
-    const urlParams = new URLSearchParams(window.location.search);
-
-    // Get appDef parameter from URL and set it as the default selection
-    if (urlParams.has('appDef') || urlParams.has('appdef')) {
-      const pathBlueprintSelection = urlParams.get('appDef') || urlParams.get('appdef');
-      if (
-        pathBlueprintSelection &&
-        isDefaultSelectionValueValid(pathBlueprintSelection, config.appDefinition, config.additionalApps)
-      ) {
-        if (config.additionalApps && config.additionalApps.length > 0) {
-          const appDefinition = config.additionalApps.find(
-            appDef => (appDef.serviceAuthToken || appDef.appId) === pathBlueprintSelection
-          );
-          setSelectedAppName(appDefinition ? appDefinition.appName : pathBlueprintSelection);
-          setSelectedAppDefinition(appDefinition ? (appDefinition.serviceAuthToken || appDefinition.appId) : pathBlueprintSelection);
-        } else {
-          setSelectedAppDefinition(pathBlueprintSelection);
-          setSelectedAppName(pathBlueprintSelection);
-        }
-      } else {
-        setError('Invalid default selection value: ' + pathBlueprintSelection);
-        console.error('Invalid default selection value: ' + pathBlueprintSelection);
-      }
-    }
-
-    // Get gitUri parameter from URL.
-    if (urlParams.has('gitUri')) {
-      const gitUriParam = urlParams.get('gitUri');
-      if (gitUriParam) {
-        setGitUri(gitUriParam);
-      }
-    }
-
-    // Get artemisToken parameter from URL.
-    if (urlParams.has('artemisToken')) {
-      const artemisTokenParam = urlParams.get('artemisToken');
-      if (artemisTokenParam) {
-        setArtemisToken(artemisTokenParam);
-      }
-    }
-
-    // Get artemisUrl parameter from URL.
-    if (urlParams.has('artemisUrl')) {
-      const artemisUrlParam = urlParams.get('artemisUrl');
-      if (artemisUrlParam) {
-        setArtemisUrl(artemisUrlParam);
-      }
-    }
-
-    // Get gitUser parameter from URL.
-    if (urlParams.has('gitUser')) {
-      const gitUserParam = urlParams.get('gitUser');
-      if (gitUserParam) {
-        setGitUser(gitUserParam);
-      }
-    }
-
-    // Get gitMail parameter from URL.
-    if (urlParams.has('gitMail')) {
-      const gitMailParam = urlParams.get('gitMail');
-      if (gitMailParam) {
-        setGitMail(gitMailParam);
-      }
-    }
-
-    // Get user parameter from URL (for anonymous mode when Keycloak is disabled).
-    if (urlParams.has('user')) {
-      const userParam = urlParams.get('user');
-      if (userParam) {
-        setUser(userParam);
-      }
-    }
-
-    // Set default user for anonymous mode when Keycloak is disabled
-    if (!config.useKeycloak && !urlParams.has('user')) {
-      const randomId = Math.random().toString(36).substring(2, 10);
-      setUser(`anonymous-${randomId}`);
-    }
-
-    if (config.useKeycloak) {
-      keycloakConfig = {
-        url: config.keycloakAuthUrl,
-        realm: config.keycloakRealm!,
-        clientId: config.keycloakClientId!
-      };
-      const keycloak = new Keycloak(keycloakConfig);
-
-      keycloak
-        .init({
-          onLoad: 'check-sso',
-          redirectUri: window.location.href,
-          checkLoginIframe: false
-        })
-        .then(authenticated => {
-          if (authenticated) {
-            const parsedToken = keycloak.idTokenParsed;
-            if (parsedToken) {
-              const userMail = parsedToken.email;
-              setToken(keycloak.idToken);
-              setEmail(userMail);
-              setUsername(parsedToken.preferred_username ?? userMail);
-              setLogoutUrl(keycloak.createLogoutUrl());
+    // Handle URL routing
+    useEffect(() => {
+        const updatePageFromUrl = (): void => {
+            const path = window.location.pathname;
+            if (path === '/imprint') {
+                setCurrentPage('imprint');
+            } else if (path === '/privacy') {
+                setCurrentPage('privacy');
+            } else {
+                setCurrentPage('home');
             }
-          }
-        })
-        .catch(() => {
-          console.error('Authentication Failed');
-        });
-    }
-    initialized = true;
-  }
-
-  const handleStartSession = useCallback((appDefinition: string): void => {
-    setLoading(true);
-    setError(undefined);
-
-    // first check if the service is available. if not we are doing maintenance and should adapt the error message accordingly
-    TheiaCloud.ping(PingRequest.create(config.serviceUrl, getServiceAuthToken(config)))
-      .then(() => {
-        // ping successful continue with launch
-        let workspace: string | undefined;
-
-        if (config.useEphemeralStorage) {
-          workspace = undefined;
-        } else {
-          if (!gitUri) {
-            workspace = undefined;
-          } else {
-            // Artemis URLs look like: https://user@artemis.cit.tum.de/git/THEIATESTTESTEXERCISE/theiatesttestexercise-artemis_admin.git
-            //                                                                                   ^^^^^^^^^^^^^^^^^^^^^ we need this part
-            // First we split at the / character, get the last part, split at the - character and get the first part
-            const repoName = gitUri?.split('/').pop()?.split('-')[0] ?? Math.random().toString().substring(2, 10);
-            workspace = 'ws-' + appDefinition + '-' + repoName + '-' + (config.useKeycloak ? username : user);
-          }
-        }
-
-        const requestOptions: RequestOptions = {
-          timeout: 60000,
-          retries: 5,
-          accessToken: token
         };
 
-        /*
+        // Initial load
+        updatePageFromUrl();
+
+        // Listen for browser back/forward navigation
+        window.addEventListener('popstate', updatePageFromUrl);
+
+        return () => {
+            window.removeEventListener('popstate', updatePageFromUrl);
+        };
+    }, []);
+
+    // Navigation handler that updates both state and URL
+    const handleNavigation = (page: 'home' | 'imprint' | 'privacy'): void => {
+        const path = page === 'home' ? '/' : `/${page}`;
+
+        // Update URL without page reload
+        window.history.pushState({}, '', path);
+
+        // Update state
+        setCurrentPage(page);
+    };
+
+    if (config === undefined) {
+        return (
+            <div className='App'>
+                <strong>FATAL: Theia Cloud configuration could not be found.</strong>
+            </div>
+        );
+    }
+
+    if (!initialized) {
+        initialAppName = config.appName;
+        initialAppDefinition = config.appDefinition;
+    }
+
+    // ignore ESLint conditional rendering warnings.
+    // If config === undefined, this is an unremediable situation anyway.
+    /* eslint-disable react-hooks/rules-of-hooks */
+    const [selectedAppName, setSelectedAppName] = useState<string>(initialAppName);
+    const [selectedAppDefinition, setSelectedAppDefinition] = useState<string>(initialAppDefinition);
+
+    const [email, setEmail] = useState<string>();
+    const [username, setUsername] = useState<string>();
+    const [token, setToken] = useState<string>();
+    const [logoutUrl, setLogoutUrl] = useState<string>();
+    const [user, setUser] = useState<string>();
+
+    const [gitUri, setGitUri] = useState<string>();
+    const [gitUser, setGitUser] = useState<string>();
+    const [gitMail, setGitMail] = useState<string>();
+    const [artemisToken, setArtemisToken] = useState<string>();
+    const [artemisUrl, setArtemisUrl] = useState<string>();
+
+    const [autoStart, setAutoStart] = useState<boolean>(false);
+
+    if (!initialized) {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Get appDef parameter from URL and set it as the default selection
+        if (urlParams.has('appDef') || urlParams.has('appdef')) {
+            const pathBlueprintSelection = urlParams.get('appDef') || urlParams.get('appdef');
+            if (
+                pathBlueprintSelection &&
+                isDefaultSelectionValueValid(pathBlueprintSelection, config.appDefinition, config.additionalApps)
+            ) {
+                if (config.additionalApps && config.additionalApps.length > 0) {
+                    const appDefinition = config.additionalApps.find(
+                        appDef => (appDef.serviceAuthToken || appDef.appId) === pathBlueprintSelection
+                    );
+                    setSelectedAppName(appDefinition ? appDefinition.appName : pathBlueprintSelection);
+                    setSelectedAppDefinition(
+                        appDefinition ? appDefinition.serviceAuthToken || appDefinition.appId : pathBlueprintSelection
+                    );
+                } else {
+                    setSelectedAppDefinition(pathBlueprintSelection);
+                    setSelectedAppName(pathBlueprintSelection);
+                }
+            } else {
+                setError('Invalid default selection value: ' + pathBlueprintSelection);
+                console.error('Invalid default selection value: ' + pathBlueprintSelection);
+            }
+        }
+
+        // Get gitUri parameter from URL.
+        if (urlParams.has('gitUri')) {
+            const gitUriParam = urlParams.get('gitUri');
+            if (gitUriParam) {
+                setGitUri(gitUriParam);
+            }
+        }
+
+        // Get artemisToken parameter from URL.
+        if (urlParams.has('artemisToken')) {
+            const artemisTokenParam = urlParams.get('artemisToken');
+            if (artemisTokenParam) {
+                setArtemisToken(artemisTokenParam);
+            }
+        }
+
+        // Get artemisUrl parameter from URL.
+        if (urlParams.has('artemisUrl')) {
+            const artemisUrlParam = urlParams.get('artemisUrl');
+            if (artemisUrlParam) {
+                setArtemisUrl(artemisUrlParam);
+            }
+        }
+
+        // Get gitUser parameter from URL.
+        if (urlParams.has('gitUser')) {
+            const gitUserParam = urlParams.get('gitUser');
+            if (gitUserParam) {
+                setGitUser(gitUserParam);
+            }
+        }
+
+        // Get gitMail parameter from URL.
+        if (urlParams.has('gitMail')) {
+            const gitMailParam = urlParams.get('gitMail');
+            if (gitMailParam) {
+                setGitMail(gitMailParam);
+            }
+        }
+
+        // Get user parameter from URL (for anonymous mode when Keycloak is disabled).
+        if (urlParams.has('user')) {
+            const userParam = urlParams.get('user');
+            if (userParam) {
+                setUser(userParam);
+            }
+        }
+
+        // Set default user for anonymous mode when Keycloak is disabled
+        if (!config.useKeycloak && !urlParams.has('user')) {
+            const randomId = Math.random().toString(36).substring(2, 10);
+            setUser(`anonymous-${randomId}`);
+        }
+
+        if (config.useKeycloak) {
+            keycloakConfig = {
+                url: config.keycloakAuthUrl,
+                realm: config.keycloakRealm!,
+                clientId: config.keycloakClientId!
+            };
+            const keycloak = new Keycloak(keycloakConfig);
+
+            keycloak
+                .init({
+                    onLoad: 'check-sso',
+                    redirectUri: window.location.href,
+                    checkLoginIframe: false
+                })
+                .then(authenticated => {
+                    if (authenticated) {
+                        const parsedToken = keycloak.idTokenParsed;
+                        if (parsedToken) {
+                            const userMail = parsedToken.email;
+                            setToken(keycloak.idToken);
+                            setEmail(userMail);
+                            setUsername(parsedToken.preferred_username ?? userMail);
+                            setLogoutUrl(keycloak.createLogoutUrl());
+                        }
+                    }
+                })
+                .catch(() => {
+                    console.error('Authentication Failed');
+                });
+        }
+        initialized = true;
+    }
+
+    const handleStartSession = useCallback(
+        (appDefinition: string): void => {
+            setLoading(true);
+            setError(undefined);
+
+            // first check if the service is available. if not we are doing maintenance and should adapt the error message accordingly
+            TheiaCloud.ping(PingRequest.create(config.serviceUrl, getServiceAuthToken(config)))
+                .then(() => {
+                    // ping successful continue with launch
+                    let workspace: string | undefined;
+
+                    if (config.useEphemeralStorage) {
+                        workspace = undefined;
+                    } else {
+                        if (!gitUri) {
+                            workspace = undefined;
+                        } else {
+                            // Artemis URLs look like: https://user@artemis.cit.tum.de/git/THEIATESTTESTEXERCISE/theiatesttestexercise-artemis_admin.git
+                            //                                                                                   ^^^^^^^^^^^^^^^^^^^^^ we need this part
+                            // First we split at the / character, get the last part, split at the - character and get the first part
+                            const repoName = gitUri?.split('/').pop()?.split('-')[0] ?? Math.random().toString().substring(2, 10);
+                            workspace = 'ws-' + appDefinition + '-' + repoName + '-' + (config.useKeycloak ? username : user);
+                        }
+                    }
+
+                    const requestOptions: RequestOptions = {
+                        timeout: 60000,
+                        retries: 5,
+                        accessToken: token
+                    };
+
+                    /*
         const sessionStartRequest: SessionStartRequest = {
           serviceUrl: config.serviceUrl,
           appId: config.appId,
@@ -283,199 +280,192 @@ function App(): JSX.Element {
           });
         */
 
-        const launchRequest = {
-          serviceUrl: config.serviceUrl,
-          appId: getServiceAuthToken(config),
-          user: config.useKeycloak ? email! : user!,
-          appDefinition: appDefinition,
-          workspaceName: workspace,
-          env: {
-            fromMap: {
-              THEIA: 'true',
-              ARTEMIS_TOKEN: artemisToken!,
-              ARTEMIS_URL: artemisUrl!,
-              GIT_URI: gitUri!,
-              GIT_USER: gitUser!,
-              GIT_MAIL: gitMail!
-            }
-          }
-        } satisfies LaunchRequest;
+                    const launchRequest = {
+                        serviceUrl: config.serviceUrl,
+                        appId: getServiceAuthToken(config),
+                        user: config.useKeycloak ? email! : user!,
+                        appDefinition: appDefinition,
+                        workspaceName: workspace,
+                        env: {
+                            fromMap: {
+                                THEIA: 'true',
+                                ARTEMIS_TOKEN: artemisToken!,
+                                ARTEMIS_URL: artemisUrl!,
+                                GIT_URI: gitUri!,
+                                GIT_USER: gitUser!,
+                                GIT_MAIL: gitMail!
+                            }
+                        }
+                    } satisfies LaunchRequest;
 
-        // TheiaCloud.launchAndRedirect(
-        // config.useEphemeralStorage
-        //  ? LaunchRequest.ephemeral(config.serviceUrl, config.appId, appDefinition, 5, email)
-        //  : LaunchRequest.createWorkspace(config.serviceUrl, config.appId, appDefinition, 5, email, workspace),
+                    // TheiaCloud.launchAndRedirect(
+                    // config.useEphemeralStorage
+                    //  ? LaunchRequest.ephemeral(config.serviceUrl, config.appId, appDefinition, 5, email)
+                    //  : LaunchRequest.createWorkspace(config.serviceUrl, config.appId, appDefinition, 5, email, workspace),
 
-        // TheiaCloud.Session.list
+                    // TheiaCloud.Session.list
 
-        TheiaCloud.launchAndRedirect(launchRequest, requestOptions)
-          .catch((err: Error) => {
-            if (err && (err as any).status === 473) {
-              setError(
-                `The app definition '${appDefinition}' is not available in the cluster.\n` +
-                  'Please try launching another application.'
-              );
-              return;
-            }
-            setError(err.message);
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      })
-      .catch((_err: Error) => {
-        setError(
-          'Sorry, we are performing some maintenance at the moment.\n' +
-            "Please try again later. Usually maintenance won't last longer than 60 minutes.\n\n"
-        );
-        setLoading(false);
-      });
-  }, [config, gitUri, username, user, token, artemisToken, artemisUrl, gitUser, gitMail, email]);
+                    TheiaCloud.launchAndRedirect(launchRequest, requestOptions)
+                        .catch((err: Error) => {
+                            if (err && (err as any).status === 473) {
+                                setError(
+                                    `The app definition '${appDefinition}' is not available in the cluster.\n` +
+                                        'Please try launching another application.'
+                                );
+                                return;
+                            }
+                            setError(err.message);
+                        })
+                        .finally(() => {
+                            setLoading(false);
+                        });
+                })
+                .catch((_err: Error) => {
+                    setError(
+                        'Sorry, we are performing some maintenance at the moment.\n' +
+                            "Please try again later. Usually maintenance won't last longer than 60 minutes.\n\n"
+                    );
+                    setLoading(false);
+                });
+        },
+        [config, gitUri, username, user, token, artemisToken, artemisUrl, gitUser, gitMail, email]
+    );
 
-  useEffect(() => {
-    if (!initialized) {
-      return;
-    }
-
-    if (config.useKeycloak && !username) {
-      return;
-    }
-
-    if (selectedAppDefinition && gitUri && artemisToken && !loading) {
-      // authenticate();
-      setAutoStart(true);
-      handleStartSession(selectedAppDefinition);
-    } else {
-      setAutoStart(false);
-    }
-  }, [username, user, selectedAppDefinition, gitUri, artemisToken, loading, handleStartSession, config.useKeycloak]);
-
-  /* eslint-enable react-hooks/rules-of-hooks */
-
-  document.title = config.pageTitle || 'TUM Theia Cloud';
-
-  const authenticate: () => void = (): void => {
-    const keycloak = new Keycloak(keycloakConfig);
-
-    keycloak
-      .init({
-        redirectUri: window.location.origin + window.location.pathname,
-        checkLoginIframe: false
-      })
-      .then((authenticated: boolean) => {
-        if (!authenticated) {
-          keycloak.login({
-            redirectUri: window.location.origin + window.location.pathname,
-            action: 'webauthn-register-passwordless:skip_if_exists'
-          });
-        } else {
-          // If we are already authenticated (e.g. session existed but UI wasn't updated), update state
-          const parsedToken = keycloak.idTokenParsed;
-          if (parsedToken) {
-            const userMail = parsedToken.email;
-            setToken(keycloak.idToken);
-            setEmail(userMail);
-            setUsername(parsedToken.preferred_username ?? userMail);
-            setLogoutUrl(keycloak.createLogoutUrl());
-          }
+    useEffect(() => {
+        if (!initialized) {
+            return;
         }
-      })
-      .catch(() => {
-        console.error('Authentication Failed');
-        setError('Authentication failed');
-      });
-  };
 
-  const needsLogin = config.useKeycloak && !token;
-  const logoFileExtension = config.logoFileExtension ?? 'svg';
+        if (config.useKeycloak && !username) {
+            return;
+        }
 
-  // Render different pages based on currentPage state
-  if (currentPage === 'imprint') {
-    return (
-      <div className='App'>
-        <VantaBackground>
-          <Imprint onNavigate={handleNavigation} />
-        </VantaBackground>
-      </div>
-    );
-  }
+        if (selectedAppDefinition && gitUri && artemisToken && !loading) {
+            // authenticate();
+            setAutoStart(true);
+            handleStartSession(selectedAppDefinition);
+        } else {
+            setAutoStart(false);
+        }
+    }, [username, user, selectedAppDefinition, gitUri, artemisToken, loading, handleStartSession, config.useKeycloak]);
 
-  if (currentPage === 'privacy') {
-    return (
-      <div className='App'>
-        <VantaBackground>
-          <Privacy onNavigate={handleNavigation} />
-        </VantaBackground>
-      </div>
-    );
-  }
+    /* eslint-enable react-hooks/rules-of-hooks */
 
-  return (
-    <div className='App'>
-      <VantaBackground>
-        <Header
-          email={config.useKeycloak ? email : undefined}
-          authenticate={config.useKeycloak ? authenticate : undefined}
-          logoutUrl={config.useKeycloak ? logoutUrl : undefined}
-        />
-        <div className='body'>
-          {loading ? (
-            <Loading logoFileExtension={logoFileExtension} text={config.loadingText} />
-          ) : (
-            <div>
-              <div>
-                <div style={{ marginTop: '2rem' }}></div>
-                <AppLogo fileExtension={logoFileExtension} />
-                <h2 className="App__title">Choose your Online IDE</h2>
-                <p>
-                  {needsLogin ? (
-                    <LoginButton login={authenticate} />
-                  ) : autoStart ? (
-                    <LaunchApp
-                      appName={selectedAppName}
-                      appDefinition={selectedAppDefinition}
-                      onStartSession={handleStartSession}
-                    />
-                  ) : (
-                    <SelectApp appDefinitions={config.additionalApps} onStartSession={handleStartSession} />
-                  )}
-                </p>
-              </div>
+    document.title = config.pageTitle || 'TUM Theia Cloud';
+
+    const authenticate: () => void = (): void => {
+        const keycloak = new Keycloak(keycloakConfig);
+
+        keycloak
+            .init({
+                redirectUri: window.location.origin + window.location.pathname,
+                checkLoginIframe: false
+            })
+            .then((authenticated: boolean) => {
+                if (!authenticated) {
+                    keycloak.login({
+                        redirectUri: window.location.origin + window.location.pathname,
+                        action: 'webauthn-register-passwordless:skip_if_exists'
+                    });
+                } else {
+                    // If we are already authenticated (e.g. session existed but UI wasn't updated), update state
+                    const parsedToken = keycloak.idTokenParsed;
+                    if (parsedToken) {
+                        const userMail = parsedToken.email;
+                        setToken(keycloak.idToken);
+                        setEmail(userMail);
+                        setUsername(parsedToken.preferred_username ?? userMail);
+                        setLogoutUrl(keycloak.createLogoutUrl());
+                    }
+                }
+            })
+            .catch(() => {
+                console.error('Authentication Failed');
+                setError('Authentication failed');
+            });
+    };
+
+    const needsLogin = config.useKeycloak && !token;
+    const logoFileExtension = config.logoFileExtension ?? 'svg';
+
+    // Render different pages based on currentPage state
+    if (currentPage === 'imprint') {
+        return (
+            <div className='App'>
+                <VantaBackground>
+                    <Imprint onNavigate={handleNavigation} />
+                </VantaBackground>
             </div>
-          )}
-          <ErrorComponent message={error} />
-          {!error && !loading && (
-            <Info
-              usesLogin={config.useKeycloak}
-              disable={config.disableInfo}
-              text={config.infoText}
-              title={config.infoTitle}
-            />
-          )}
+        );
+    }
+
+    if (currentPage === 'privacy') {
+        return (
+            <div className='App'>
+                <VantaBackground>
+                    <Privacy onNavigate={handleNavigation} />
+                </VantaBackground>
+            </div>
+        );
+    }
+
+    return (
+        <div className='App'>
+            <VantaBackground>
+                <Header
+                    email={config.useKeycloak ? email : undefined}
+                    authenticate={config.useKeycloak ? authenticate : undefined}
+                    logoutUrl={config.useKeycloak ? logoutUrl : undefined}
+                />
+                <div className='body'>
+                    {loading ? (
+                        <Loading logoFileExtension={logoFileExtension} text={config.loadingText} />
+                    ) : (
+                        <div>
+                            <div>
+                                <div style={{ marginTop: '2rem' }}></div>
+                                <AppLogo fileExtension={logoFileExtension} />
+                                <h2 className='App__title'>Choose your Online IDE</h2>
+                                <div>
+                                    {needsLogin ? (
+                                        <LoginButton login={authenticate} />
+                                    ) : autoStart ? (
+                                        <LaunchApp
+                                            appName={selectedAppName}
+                                            appDefinition={selectedAppDefinition}
+                                            onStartSession={handleStartSession}
+                                        />
+                                    ) : (
+                                        <SelectApp appDefinitions={config.additionalApps} onStartSession={handleStartSession} />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <ErrorComponent message={error} />
+                    {!error && !loading && (
+                        <Info usesLogin={config.useKeycloak} disable={config.disableInfo} text={config.infoText} title={config.infoTitle} />
+                    )}
+                </div>
+                <Footer
+                    selectedAppDefinition={autoStart ? selectedAppDefinition : ''}
+                    onNavigate={handleNavigation}
+                    footerLinks={config.footerLinks}
+                />
+            </VantaBackground>
         </div>
-        <Footer
-          selectedAppDefinition={autoStart ? selectedAppDefinition : ''}
-          onNavigate={handleNavigation}
-          footerLinks={config.footerLinks}
-        />
-      </VantaBackground>
-    </div>
-  );
+    );
 }
 
-function isDefaultSelectionValueValid(
-  defaultSelection: string,
-  appDefinition: string,
-  additionalApps?: ExtendedAppDefinition[]
-): boolean {
-  if (defaultSelection === appDefinition) {
+function isDefaultSelectionValueValid(defaultSelection: string, appDefinition: string, additionalApps?: ExtendedAppDefinition[]): boolean {
+    if (defaultSelection === appDefinition) {
+        return true;
+    }
+    if (additionalApps && additionalApps.length > 0) {
+        return additionalApps.map(def => def.serviceAuthToken).filter(serviceAuthToken => serviceAuthToken === defaultSelection).length > 0;
+    }
+    // If there are no additional apps explicitly configured, we accept any app definition given via url parameter
     return true;
-  }
-  if (additionalApps && additionalApps.length > 0) {
-    return additionalApps.map(def => def.serviceAuthToken).filter(serviceAuthToken => serviceAuthToken === defaultSelection).length > 0;
-  }
-  // If there are no additional apps explicitly configured, we accept any app definition given via url parameter
-  return true;
 }
 
 export default App;
